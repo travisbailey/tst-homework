@@ -51,6 +51,7 @@ case class PromotionCombination(promo: Promotion, combinesWith: TreeSet[Promotio
             case x => variations(x-1) ++ combinesWith.toSeq.combinations(x).map(_.toSet)
         }
 
+    // This is clearly a O(n!) size problem... only gonna be performant with small values of n...
     def toCombos : Set[Set[String]] =
         variations().filter(v => promo.combinable(v)).map(cv => Set(promo.code) ++ cv.map(_.code))
 }
