@@ -32,12 +32,6 @@ case class PromotionCombination(promo: Promotion, combinesWith: TreeSet[Promotio
     val orderable : String = combinesWith.mkString(",")
 
     def assess(another: Promotion) : PromotionCombination = if (promo.combinable(another)) PromotionCombination(promo, combinesWith + another) else this
-    def combine(another: PromotionCombination) : Seq[PromotionCombination] =
-        if (promo.code == another.promo.code) {
-            Seq(PromotionCombination(promo, combinesWith.concat(another.combinesWith)))
-        } else {
-            Seq(another, this)
-        }
 
     override def compare(that: PromotionCombination): Int =
         promo compare that.promo match {
