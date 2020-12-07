@@ -3,6 +3,8 @@ package services
 import models.{BestGroupPrice, CabinPrice, Promotion, PromotionCombination, PromotionCombo, Rate}
 import utils.Extensions._
 
+import scala.collection.immutable.TreeSet
+
 trait RateService {
     def getBestGroupPrices(rates: Seq[Rate], prices: Seq[CabinPrice]): Seq[BestGroupPrice]
     def allCombinablePromotions(allPromotions: Seq[Promotion]): Seq[PromotionCombo]
@@ -33,16 +35,14 @@ class DefaultRateService extends RateService {
         // choosing to apply a cross product on the promotions to generate all possible relations and then filter.
         // this is naturally creates a O(n^2) balloon, but not sure I can save a lot here
         val reduced = promotions.cross(promotions)
-            // initialize a holding class that is really an inversion of the supplied Promotion type
-            .map(p => PromotionCombination(p._1).assess(p._2)).toList.sorted
-            // collection is sorted to allow for a folding aggregation of all possible combinable promotions for each promotion
-            .foldLeft[Seq[PromotionCombination]](Nil) { (acc, combo) =>
-                acc match {
-                    case Nil => Seq(combo)
-                    case lastCombo :: tail => lastCombo.combine(combo) ++ acc.tail
-                }
-            }
-            // this converts to a to sets
+            // initialize a holding class that is really an inversion of the supplied Promotion type.
+            // I want to know the promotions a given promotion combines with rather than reverse
+            .map(p => PromotionCombination(p._1).assess(p._2))
+            // group by the promotion to aggregate all the combinables
+            .groupBy(_.promo).map(t =>
+                PromotionCombination(t._1, TreeSet.empty[Promotion] ++ t._2.flatMap(_.combinesWith))
+            )
+            // this converts the intermediate containers into the required Seq outputs and gets distinct
             .flatMap(_.toCombos)
             .toSet
 
