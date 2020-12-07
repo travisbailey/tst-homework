@@ -13,10 +13,14 @@ trait RateService {
 
 class DefaultRateService extends RateService {
     def getBestGroupPrices(rates: Seq[Rate], prices: Seq[CabinPrice]) : Seq[BestGroupPrice] = {
+        // establish a map to use in next call
         val ratesByCode = rates.map(r => r.rateCode -> r).toMap
+        // map each price to be able to create initial BestGroupPrice candidates
         prices.flatMap(p => ratesByCode.get(p.rateCode)
             .map(r => BestGroupPrice(p.cabinCode, r.rateCode, p.price, r.rateGroup)))
+            // group candidates for sorting
             .groupBy(bgr => (bgr.cabinCode, bgr.rateGroup))
+            // map best candidate from sorted seq
             .flatMap(g => g._2.sortBy(_.price).headOption)
             .toSeq
     }
@@ -43,10 +47,11 @@ class DefaultRateService extends RateService {
                 PromotionCombination(t._1, TreeSet.empty[Promotion] ++ t._2.flatMap(_.combinesWith))
             )
             // this converts the intermediate containers into the required Seq outputs and gets distinct
+            // although this is the universe of possible sets
             .flatMap(_.toCombos)
             .toSet
 
-        // do some set filtering and ordering merely because requirements seemed to imply the requirement
+        // do some set filtering and ordering merely because requirements seemed to imply the need
         reduced.filterNot(cv => (reduced - cv).exists(another => cv.subsetOf(another)))
             .map(ns => PromotionCombo(ns.toSeq.sorted))
             .toSeq
