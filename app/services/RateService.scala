@@ -32,7 +32,9 @@ class DefaultRateService extends RateService {
         // given the expense of these operations, if larger sets are introduced, it would make sense to attempt
         // to filter allPromotions down to those that are relevant to the supplied promotion
         process(allPromotions).collect {
+            // filter the universe for those containing the input promotion
             case relevant if relevant.promotionCodes.contains(promotionCode) =>
+                // this is simply because of the implied requirement to have input promo listed first
                 PromotionCombo(Seq(promotionCode) ++ relevant.promotionCodes.filterNot(_ == promotionCode))
         }
 
@@ -43,7 +45,8 @@ class DefaultRateService extends RateService {
             // initialize a holding class that is really an inversion of the supplied Promotion type.
             // I want to know the promotions a given promotion combines with rather than reverse
             .map(p => PromotionCombination(p._1).assess(p._2))
-            // group by the promotion to aggregate all the combinables
+            // group by the promotion to aggregate all the combinables.  Using a TreeSet to get ordering
+            // and uniqueness of combinables
             .groupBy(_.promo).map(t =>
                 PromotionCombination(t._1, TreeSet.empty[Promotion] ++ t._2.flatMap(_.combinesWith))
             )
