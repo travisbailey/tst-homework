@@ -31,9 +31,10 @@ class DefaultRateService extends RateService {
     def combinablePromotions(promotionCode: String, allPromotions: Seq[Promotion]) : Seq[PromotionCombo] =
         // given the expense of these operations, if larger sets are introduced, it would make sense to attempt
         // to filter allPromotions down to those that are relevant to the supplied promotion
-        process(allPromotions)
-            .filter(_.promotionCodes.contains(promotionCode))
-            .map(pc => PromotionCombo(Seq(promotionCode) ++ pc.promotionCodes.filterNot(_ == promotionCode)))
+        process(allPromotions).collect {
+            case relevant if relevant.promotionCodes.contains(promotionCode) =>
+                PromotionCombo(Seq(promotionCode) ++ relevant.promotionCodes.filterNot(_ == promotionCode))
+        }
 
     private def process(promotions: Seq[Promotion]) : Seq[PromotionCombo] = {
         // choosing to apply a cross product on the promotions to generate all possible relations and then filter.
