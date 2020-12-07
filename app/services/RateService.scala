@@ -41,7 +41,7 @@ class DefaultRateService extends RateService {
     private def process(promotions: Seq[Promotion]) : Seq[PromotionCombo] = {
         // choosing to apply a cross product on the promotions to generate all possible relations and then filter.
         // this is naturally creates a O(n^2) balloon, but not sure I can save a lot here
-        val reduced = promotions.cross(promotions)
+        val combinables = promotions.cross(promotions)
             // initialize a holding class that is really an inversion of the supplied Promotion type.
             // I want to know the promotions a given promotion combines with rather than reverse
             .map(p => PromotionCombination(p._1).assess(p._2))
@@ -56,7 +56,7 @@ class DefaultRateService extends RateService {
             .toSet
 
         // do some set filtering and ordering merely because requirements seemed to imply the need
-        reduced.filterNot(cv => (reduced - cv).exists(another => cv.subsetOf(another)))
+        combinables.filterNot(c => (combinables - c).exists(another => c.subsetOf(another)))
             .map(ns => PromotionCombo(ns.toSeq.sorted))
             .toSeq
     }
