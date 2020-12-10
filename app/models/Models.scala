@@ -35,7 +35,7 @@ case class PromotionCombination(promo: Promotion, combinesWith: TreeSet[Promotio
 
     override def compare(that: PromotionCombination): Int =
         promo compare that.promo match {
-            case 0 => orderable compare orderable
+            case 0 => orderable compare that.orderable
             case other => other
         }
 
